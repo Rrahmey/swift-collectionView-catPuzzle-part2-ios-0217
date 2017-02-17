@@ -20,7 +20,9 @@ class CollectionViewController: UICollectionViewController, UICollectionViewDele
     var numberOfRows: CGFloat!
     var numberOfColumns: CGFloat!
     var imageSlices = [UIImage]()
-
+    var solvedSlices = [UIImage]()
+    
+    
     
     
     override func viewDidLoad() {
@@ -30,17 +32,26 @@ class CollectionViewController: UICollectionViewController, UICollectionViewDele
         configureLayout()
         
         for i in 1...12 {
-    
+            
             let catImage = UIImage(named: String(i))
             if let catImage = catImage{
                 imageSlices.append(catImage)
             }
+            solvedSlices = imageSlices
         }
-
+        
         randomizeCatImages()
+        
     }
     
-    //shuffles image 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        footerReusableView.startTimer()
+    }
+    
+    
+    
+    //shuffles image
     func randomizeCatImages () {
         var randomArray = [UIImage] ()
         for i in 0...11 {
@@ -61,13 +72,12 @@ class CollectionViewController: UICollectionViewController, UICollectionViewDele
         referenceSize = CGSize(width: width, height: 60)
         let itemWidth = ((width-8)/3)
         let itemHeight = ((height-130)/4)
-       
+        
         itemSize = CGSize(width: itemWidth, height: itemHeight)
-
+        
     }
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        print(imageSlices.count)
         return imageSlices.count
         
     }
@@ -117,6 +127,24 @@ class CollectionViewController: UICollectionViewController, UICollectionViewDele
     }
     
     override func collectionView(_ collectionView: UICollectionView, moveItemAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        
+        self.collectionView?.performBatchUpdates({ 
+            let sourceImage = self.imageSlices.remove(at: sourceIndexPath.row)
+            self.imageSlices.insert(sourceImage, at: destinationIndexPath.row)
+        }, completion: { completed in
+            if self.imageSlices == self.solvedSlices {
+                self.footerReusableView.timer.invalidate()
+                self.performSegue(withIdentifier: "solvedSegue", sender: completed)
+            }})
+        
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if let destination = segue.destination as? SolvedViewController{
+            destination.image = UIImage(named: "cats")
+            destination.time = footerReusableView.timerLabel.text
+        }
     }
     
 }
+
